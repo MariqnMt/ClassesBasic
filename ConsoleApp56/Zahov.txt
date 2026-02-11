@@ -10,3 +10,15 @@ Facebook
 default
 reset
 default
+
+
+git push 
+git pull 
+
+
+git add .
+git add Zahov.txt
+git commit -m "New text file"
+git push
+git push --force
+git status 
