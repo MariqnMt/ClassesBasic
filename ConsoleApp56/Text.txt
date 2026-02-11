@@ -1,0 +1,260 @@
+This tutorial is about setting up a Github account to commit (via SSH) to an existing/new repository and common commands to handle that repository.  
+
+## 1. Setting up git
+
+* globally (recommended for one github account / OS user)
+
+`git config --global user.email "your_email@example.com"`  
+`git config --global user.name "Your Name"`
+
+* locally (recommended for multiple github accounts / OS user)
+
+`git config --local user.email "your_email@example.com"`  
+`git config --local user.name "Your Name"`
+
+* system (across the entire machine)
+
+`git config --system user.email "your_email@example.com"`  
+`git config --system user.name "Your Name"`
+
+## 2. Print the config
+
+`git config --list`
+
+## 3. Setting up Github SSH keys
+
+**Generate the keys**  
+
+`ssh-keygen -t ed25519 -C "your_email@example.com"`
+
+The path I setup was `/home/user/.ssh/id_rsa_github`. It generated 2 files: `/home/user/.ssh/id_rsa_github` and `/home/user/.ssh/id_rsa_github.pub`  
+
+**Setting up the keys - method 1**
+
+a. Adding the key to ssh command in a local git repo  
+
+`git config --local core.sshCommand "ssh -i /var/www/html/website/github.key"`
+
+**Setting up the keys - method 2**
+
+a. Start the ssh-agent  
+
+`eval $(ssh-agent -s)`  
+
+b. Add the private key to ssh-agent  
+
+`ssh-add ~/.ssh/id_rsa_github`  
+
+**Note:** add the content of your public key `/home/user/.ssh/id_rsa_github.pub` (without email) to [Github SSH keys page](https://github.com/settings/keys)  
+
+## 4. Clone a Github repository locally to a specific folder
+
+`git clone https://github.com/binarweb/repository-name.git destination-folder-name`
+
+with a specific identity
+
+`git clone --config core.sshCommand="ssh -i c:/Users/MyUser/.ssh/github_binarweb" git@github.com:binarweb/repository-name.git .`
+
+## 5. Clone a Github repository - latest commit only
+
+`git clone --depth=1 https://github.com/binarweb/repository-name.git`
+
+## 6. Start a new git repository and push it to Github
+
+`git init`  
+`git config --local user.email "your_email@example.com"`  
+`git config --local user.name "Your Name"`  
+`git config --local core.sshCommand "ssh -i /var/www/html/website/github.key"`  
+`git remote add origin git@github.com:binarweb/repository-name.git`  
+`git branch -M master`  
+`git add .`  
+`git commit -m 'initial commit'`  
+`git push -u origin master`  
+
+## 7. Additional commits
+
+If you work with SSH keys, you need to setup (once) the origin:  
+
+`git remote set-url origin git@github.com:binarweb/repository-name.git`  
+
+Then  
+
+`git add .`  
+stages the file
+
+`git commit -m 'additional commit'`  
+commits the changes
+
+`git commit -m 'commit title' -m 'commit description'`  
+commits with title and description (it doesn't support multiple description lines - see command below)
+
+`git commit`  
+will open an editor where you can add title and description (see [this](https://stackoverflow.com/a/36427485/1057527))
+
+`git push -u origin master`  
+push the commits to master branch
+
+## 8. Amend the changes to previous commit
+
+This command will merge the current change into the last commit (no other commit will be made) with an optional message change   
+
+`git commit -a --amend`  
+
+While this will merge the 2 commits, the commit hash changes.
+
+## 9. Squash commits
+
+Make sure the squash strategy is merge, by running:
+
+`git config pull.rebase false`
+
+Squash until a specific commit with:
+
+`git reset --soft ceb5ab28ca && git commit`
+
+After this, push the changes with:
+
+`git push --force`
+
+https://stackoverflow.com/a/77386103/9618184
+
+## 10. Unstage files
+
+After we have staged the files with `git add .`, we can unstage the files with
+
+`git rm --cached README`
+
+for a single file, or 
+
+`git reset HEAD .`  
+`git reset HEAD README`
+
+for multiple/single files
+
+## 11. Revert a file after it has been changed/deleted
+
+`git checkout README`
+
+this will revert the file from current revision, or  
+
+`git checkout master~2 README`
+
+to revert the file from two revisions back from master branch
+
+## 12. Update local repository with the changes from Github
+
+`git pull origin master`
+
+or with overwrite
+
+`git reset --hard HEAD`  
+`git pull origin master`
+
+## 13. See local files changes before the commit is made
+
+`git diff`
+
+## 14. View the last commit
+
+simple (author, date, commit title, commit hash):
+
+`git log -1`
+
+with some details (simple + diff of files):
+
+`git show`
+
+## 15. Switch branches
+
+`git checkout dev`  
+
+where `dev` is the branch you want to switch to  
+
+## 16. Reset the last n commits
+
+`git reset --hard HEAD~2`  
+`git push -f`  
+
+*HEAD~2* means the last 2 commits  
+**Note:** make sure you don't have remote commits before running `git push -f` command or else the remote changes will be permanently lost
+
+## 17. List all commits
+
+`git log --reflog`  
+
+## 18. List untracked changes and pending commits
+
+`git status`  
+
+## 19. Commit only some files
+
+**Get a list of files you want to commit**
+
+```text
+git status
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+modified:   file1
+modified:   file2
+modified:   file3
+modified:   file4
+```
+
+**Add the files to staging**
+
+`git add file1 file2`
+
+**Check to see what you are committing**
+
+```text
+git status
+
+Changes to be committed:
+  (use "git reset HEAD <file>..." to unstage)
+
+    modified:   file1
+    modified:   file2
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+    modified:   file3
+    modified:   file4
+```
+
+**Commit the files with a commit message**
+
+`git commit -m "Fixed files 1 and 2"`
+
+**If you accidentally commit the wrong files**
+
+`git reset --soft HEAD~1`
+
+will delete the last commit, but you will not lose any file changes
+
+**If you want to unstage the files and start over**
+
+```text
+git reset
+
+Unstaged changes after reset:
+M file1
+M file2
+M file3
+M file4
+```
+
+## References:  
+- [switch from HTTPS to SSH](https://help.github.com/articles/changing-a-remote-s-url/)
+- [jsoverson/gitfaq](https://github.com/jsoverson/gitfaq/tree/master/contents/articles)
+- [git checkout](https://git-scm.com/docs/git-checkout)
+- [delete the last n commit](https://stackoverflow.com/a/38744711/1057527)
+- [git config](https://www.atlassian.com/git/tutorials/setting-up-a-repository/git-config)
+- [How to resolve merge conflict using Visual Studio Code](https://www.youtube.com/watch?v=kBIMGOxqqnk)
+- [commit a change with both "message" and "description"](https://stackoverflow.com/a/36427485/1057527)
+- [How do I commit only some files?](https://stackoverflow.com/a/30043911/9618184)
+- [Generating a new SSH key and adding it to the ssh-agent](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
